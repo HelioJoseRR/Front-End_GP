@@ -216,7 +216,7 @@ button:active {
 }
 
 .header{
-    position: fixed;
+    position: relative;
     top: -50px;
     left: 0;
     width: 100%;

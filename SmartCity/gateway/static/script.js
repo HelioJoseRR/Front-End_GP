@@ -116,8 +116,11 @@ function atualizarPoste() {
     else if (modoIluminacao === "falha") {
         luzPoste.classList.add("acesa", "piscando");
     } 
-    else if (modoIluminacao === "manutenção") {
+    else if (modoIluminacao === "manutenção" || modoIluminacao === "desligar") {
         luzPoste.classList.add("desligado");
+    }
+    else if(modoIluminacao === "ligar"){
+        luzPoste.classList.add("acesa")
     }
 }
 

@@ -47,6 +47,8 @@ def chamar_servico(nome, url):
         if nome == "Iluminação":
             if estado in ["falha", "manutenção"]:
                 logging.error(f"{nome} em problema {estado}")
+            elif estado in ["ligado", "desligado"]:
+                logging.info(f"{nome} estado forcado: {estado}")
             else:
                 logging.info(f"{nome} estado normal: {estado}")
         elif nome == "Semáforo":
@@ -126,9 +128,9 @@ def comando_iluminacao():
         return jsonify({"erro": "informe o modo no JSON, ex: {\"modo\": \"falha\"}"}), 400
     
     modo = dados["modo"]
-    if modo not in ["normal", "falha", "manutenção"]:
+    if modo not in ["normal", "falha", "manutenção", "ligar", "desligar"]:
         logging.error(f"Modo inválido recebido {modo}")
-        return jsonify({"erro": "Modo inválido. Use normal, falha ou manutenção"}), 400
+        return jsonify({"erro": "Modo inválido. Use normal, falha, manutenção, ligar ou desligar"}), 400
     try:
         resposta = requests.post(ILUMINACAO_URL.replace("/estado", "") + "/modo", json=dados)
         logging.info(f"Requisição enviada com sucesso para o serviço de iluminação, resposta: {resposta.json()}")

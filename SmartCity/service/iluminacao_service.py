@@ -25,6 +25,10 @@ def estado_iluminacao():
         estado = "falha"
     elif modo_operacao == "manutenção":
         estado = "desligado"
+    elif modo_operacao == "ligar":
+        estado = "ligado"
+    elif modo_operacao == "desligar":
+        estado = "desligado"
     else:
         estado = calcular_estado_iluminacao()
     #time.sleep(random.uniform(0.5,2))    
@@ -40,8 +44,8 @@ def mudar_modo():
     
     novo_modo = dados["modo"]
 
-    if novo_modo not in ["normal", "falha", "manutenção"]:
-        return jsonify({"erro": "Modo inválido. Use normal, falha ou manutenção"}), 400
+    if novo_modo not in ["normal", "falha", "manutenção", "ligar", "desligar"]:
+        return jsonify({"erro": "Modo inválido. Use normal, falha, manutenção, ligar ou desligar"}), 400
     
     modo_operacao = novo_modo
     return jsonify({"mensagem":f"Modo alterado para {modo_operacao}"}), 200
