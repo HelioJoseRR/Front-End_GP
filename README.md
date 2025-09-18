@@ -1,7 +1,12 @@
 # Sistema-Distribuido - Cidade-Inteligente - API-Gateway
-
+*Windows/poweshell*
 - Invoke-WebRequest -Uri "http://localhost:5000/api/semaforo/modo" -Method POST -ContentType "application/json" -Body '{"modo":"normal"}'
 - Invoke-WebRequest -Uri "http://localhost:5000/api/iluminacao/modo" -Method POST -ContentType "application/json" -Body '{"modo": "falha"}'
+
+*Linux/bash*
+-curl -X POST http://localhost:5000/api/iluminacao/modo \
+-H "Content-Type: application/json" \
+-d '{"modo": "falha"}'
 
 *Windows*
 - python -m venv venv
