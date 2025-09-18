@@ -46,5 +46,10 @@ def mudar_modo():
     modo_operacao = novo_modo
     return jsonify({"mensagem":f"Modo alterado para {modo_operacao}"}), 200
 
+@app.route("/modo", methods = ["GET"])
+def obter_modo():
+    global modo_operacao
+    return jsonify({"modo": modo_operacao})
+
 if __name__ == "__main__":
     app.run(host = "0.0.0.0", port = 5002)

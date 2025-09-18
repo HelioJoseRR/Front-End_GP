@@ -28,7 +28,6 @@ def estado_semaforo():
         estado = "intermitente"
     else:
         estado = "desligado"
-    #time.sleep(random.uniform(0.5,2))
     return jsonify({"semaforo": estado})
 
 @app.route("/modo", methods=["POST"])

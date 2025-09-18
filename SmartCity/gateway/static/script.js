@@ -101,28 +101,26 @@ function atualizarSemaforo(estado){
     document.getElementById("estadoSemaforo").innerText = "Semáforo: " + estado;
 }
 
-function atualizarPoste(estadoIlum)
-{
+function atualizarPoste() {
     const luzPoste = document.getElementById("luz-poste");
 
-    luzPoste.classList.remove("acesa","piscando", "desligado");
+    luzPoste.classList.remove("acesa", "piscando", "desligado");
 
-    if(modoIluminacao === "normal")
-    {
-        if(estadoIlum === "noite")
-        {
+    if (modoIluminacao === "normal") {
+        if (cicloDiaNoite.estadoAtual === "noite") {
             luzPoste.classList.add("acesa");
+        } else {
+            luzPoste.classList.add("desligado");
         }
-    }
-    else if(modoIluminacao === "falha")
-    {
-        luzPoste.classList.add("acesa","piscando");
-    }
-    else if(modoIluminacao === "manutenção")
-    {
-        luzPoste.classList.add("desligado")
+    } 
+    else if (modoIluminacao === "falha") {
+        luzPoste.classList.add("acesa", "piscando");
+    } 
+    else if (modoIluminacao === "manutenção") {
+        luzPoste.classList.add("desligado");
     }
 }
+
 
 let cicloDiaNoite ={
     estados: [ "amanhecer", "dia", "entardecer", "noite"],
@@ -135,21 +133,32 @@ async function atualizarEstados(){
         let semaforoResp = await fetch(`${API_BASE}/semaforo`);
         let semaforoData = await semaforoResp.json();
         atualizarSemaforo(semaforoData.dados.semaforo);
-        
-        if(modoIluminacao === "normal"){
-            atualizarPoste(cicloDiaNoite.estadoAtual);
-        }
-        else{
-            atualizarPoste(modoIluminacao);
+
+        try {
+            let modoResp = await fetch(`${API_BASE}/iluminacao/modo`);
+            if (modoResp.ok) {
+                let modoJson = await modoResp.json();
+                if (modoJson.modo) {
+                    modoIluminacao = modoJson.modo;
+                } else if (modoJson.dados && modoJson.dados.modo) {
+                    modoIluminacao = modoJson.dados.modo;
+                }
+            } else {
+                console.warn("Não foi possível obter modo da iluminação (status):", modoResp.status);
+            }
+        } catch (e) {
+            console.warn("Erro ao buscar modo da iluminação:", e);
         }
 
+        atualizarPoste(); 
+
         document.getElementById("estadoIluminacao").innerText = "Iluminação: " + modoIluminacao; 
-    }
-    catch (e)
-    {
+
+    } catch (e) {
         console.error("Erro ao atualizar estados", e);
     }
 }
+
 
 async function alterarModoSemaforo(modo) {
     try{

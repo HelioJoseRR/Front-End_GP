@@ -137,7 +137,17 @@ def comando_iluminacao():
     except Exception as e:
         logging.error(f"Erro ao comunicar com o serviço de iluminação: {e}")
         return jsonify({"erro": "Não foi possível alterar o modo de iluminação"}), 500
-    
+
+@app.route("/api/iluminacao/modo", methods=["GET"])
+def gateway_iluminacao_modo():
+    try:
+        url_modo = ILUMINACAO_URL.replace("/estado", "") + "/modo"
+        resposta = requests.get(url_modo, timeout=5)
+        return jsonify(resposta.json()), resposta.status_code
+    except Exception as e:
+        logging.error(f"Erro ao obter modo da iluminação: {e}")
+        return jsonify({"erro": "Não foi possível obter o modo da iluminação"}), 500
+
 if __name__ == "__main__":
     logging.info("Iniciando API Gateway...")
     app.run(host="0.0.0.0",port=5000, debug=True)
