@@ -1,0 +1,329 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 120px;
+    
+    background: linear-gradient(to bottom,
+        #2c3e50, #f39c12, #f1c40f, 
+        #87cefa, #f0f0f0,           
+        #f39c12, #d35400, #2c3e50, 
+        #0a0a2a, #1a1a40            
+    );
+    
+    background-size: 100% 400%; 
+    transition: background-position 20s ease-in-out;
+}
+
+
+body.amanhecer {
+    background-position: 0 0;
+}
+
+body.dia {
+    background-position: 0 33%; 
+}
+
+body.entardecer {
+    background-position: 0 66%; 
+}
+
+body.noite {
+    background-position: 0 100%; 
+}
+
+.container-cidade{
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.card {
+    background: rgba(40, 44, 52, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    border-radius: 10px;
+    padding: 20px;
+    flex: 1;
+    min-width: 250px;
+    max-width: 300px;
+    margin: 15px auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    color: #e0e0e0; 
+    transition: transform 0.3s ease, background 0.3s ease;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.card:hover {
+    background: rgba(40, 44, 52, 0.95);
+    transform: translateY(-3px);
+}
+
+.status{
+    font-size: 1.2em;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+#poste {
+    position: relative;
+    width: 180px;
+    height: 280px;
+    margin: 30px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.poste-haste{
+    position: relative;
+    width: 20px;
+    height: 200px;
+    background: linear-gradient(to bottom, #6b6b6b, #2a2a2a);
+    border-radius: 12px 12px 6px 6px;
+    box-shadow:
+     inset 0 0 12px rgba(255, 255, 255, 0.12),
+     0 6px 12px rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    transition: background 0.3s ease;
+}
+
+.poste-braco{
+    position: absolute;
+    top: 30px;
+    left: 100%;
+    width: 90px;
+    height: 16px;
+    background: linear-gradient(90deg, #7a7a7a, #2e2e2e);
+    border-radius: 12px 12px 12px 12px;
+    box-shadow: 
+    inset 0 3px 6px rgba(255, 255, 255, 0.15),
+    0 3px 8px rgba(0, 0, 0, 0.45);
+    transform: translateX(-12px);
+    z-index: 2;
+    transition: background  0.3s ease;
+}
+
+.luz-poste {
+    position: absolute;
+    top: 10px;
+    right: -10px;
+    width: 60px;
+    height: 40px;
+    background: linear-gradient(180deg, #555 0%, #333 100%);
+    clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+    box-shadow:
+        inset 0 4px 8px rgba(255, 255, 255, 0.15),
+        0 0 12px 3px rgba(0, 0, 0, 0.6);
+    opacity: 0.6;
+    transition: all 0.4s ease;
+    z-index: 3;
+}
+
+.luz-poste.acesa{
+    background: radial-gradient(circle at 30% 30%, #fffecb, #ffea00 60%, #bba600 90%);
+    opacity: 1;
+    box-shadow: 0 0 30px 12px rgba(255, 255, 150, 0.9),
+    0 0 60px 25px rgba(255, 255, 150, 0.5),
+    inset 0 0 15px 5px #fffecb;
+}
+
+
+.luz-poste.piscando{
+    animation: piscar 1.2s infinite;
+    opacity: 1;
+}
+
+.poste-base {
+    width: 100px;
+    height: 22px;
+    background: linear-gradient(to bottom, #4a4a4a, #1a1a1a);
+    border-radius: 14px;
+    box-shadow:
+        0 8px 10px rgba(0, 0, 0, 0.55),
+        inset 0 3px 7px rgba(255, 255, 255, 0.12);
+    z-index: 3;
+    margin-top: -18px;
+    transition: background 0.3s ease;
+}
+
+button {
+    margin: 8px;
+    padding: 12px 20px;
+    cursor: pointer;
+    border: 1px solid #4a90e2;
+    border-radius: 8px;
+    background: transparent; 
+    color: #4a90e2; 
+    font-weight: bold;
+    font-size: 1.1em;
+    transition: all 0.4s ease-in-out; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+button:hover {
+    background: #4a90e2; 
+    color: #fff; 
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+button:active {
+    background: #3a7dc9; 
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.semaforo {
+    background: #333333;
+    border-radius: 10px;
+    padding: 10px;
+    width: 80px;
+    margin: 0 auto 15px auto;
+}
+
+.luz {
+    width: 70px;
+    height: 70px;
+    margin: 15px auto;
+    border-radius: 50%;
+    background: #555;
+    opacity: 0.3;
+    transition: all 0.3s ease;
+}
+
+.luz.acesa{
+    opacity: 1;
+    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.6);
+}
+
+#luz-vermelha.luz{background: red;}
+#luz-amarelo.luz{background: yellow;}
+#luz-verde.luz{background: green;}
+
+@keyframes piscar{
+    0% {opacity: 1;}
+    50% {opacity: 0;}
+    100% {opacity: 1;}
+}
+
+.piscando{
+    animation: piscar 1s infinite;
+}
+
+.header{
+    position: fixed;
+    top: -50px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 20px 0;
+    z-index: 1000;
+}
+
+.header h1 {
+    font-family: 'Segoe UI', sans-serif; 
+    font-size: 3em;
+    font-weight: 800; 
+    color: #f0f0f0; 
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.7), 0 0 20px rgba(255, 255, 255, 0.5); 
+    background: linear-gradient(145deg, #1f272e, #13171a);
+    padding: 15px 40px;
+    border-radius: 10px;
+    border: 3px solid #666; 
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    letter-spacing: 3px;
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+}
+
+.sol {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    background-color: #f7d71f;
+    border-radius: 50%;
+    box-shadow: 0 0 60px #f7d71f, 0 0 120px #f7d71f;
+    opacity: 0;
+    z-index: -1;
+    animation: percursoSol 60s linear infinite; 
+    transition: opacity 20s ease-in-out; 
+}
+
+.lua {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 160px;
+    height: 160px;
+    background-color: #f0f4c3;
+    border-radius: 50%;
+    box-shadow: 0 0 40px #f0f4c3, 0 0 80px #f0f4c3;
+    opacity: 0;
+    z-index: -1;
+    animation: percursoLua 60s linear infinite; 
+    transition: opacity 20s ease-in-out; 
+}
+
+.estrela {
+    position: absolute;
+    width: 2px; 
+    height: 2px;
+    background-color: #fff; 
+    border-radius: 50%;
+    animation: piscarEstrela 5s infinite;
+    z-index: -2;
+}
+
+
+.nuvens{
+    position: fixed;
+    top: 90px;
+    left: 0;   
+    width: 100%;
+    height: 100%;
+    background-image: url('../static/imagens/nuvem.png');
+    background-repeat: repeat-x;
+    background-size: 50%;
+    animation: moverNuvens 180s linear infinite;
+    transition: opacity 5s ease-in-out;
+    opacity: 0;
+    z-index: -1;
+}
+
+@keyframes percursoSol {
+    0% { transform: translateY(100vh) translateX(-50%); }
+    25% { transform: translateY(-20vh) translateX(-50%); }
+    75% { transform: translateY(-20vh) translateX(-50%); }
+    100% { transform: translateY(100vh) translateX(-50%); }
+}
+
+@keyframes percursoLua {
+    0% { transform: translateY(100vh) translateX(-50%); }
+    25% { transform: translateY(-20vh) translateX(-50%); }
+    75% { transform: translateY(-20vh) translateX(-50%); }
+    100% { transform: translateY(100vh) translateX(-50%); }
+}
+
+@keyframes moverNuvens{
+    from {background-position: 0 0;}
+    to {background-position: -100% 0;}
+}
+
+@keyframes piscarEstrela {
+    0%, 100% {
+        opacity: 0.8;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.2;
+        transform: scale(0.8);
+    }
+}
