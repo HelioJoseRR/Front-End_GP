@@ -3,9 +3,220 @@ from flask_cors import CORS
 import requests
 import logging
 import time
+import sqlite3
+from argon2 import PasswordHasher
+import os
 
 app = Flask(__name__)
 CORS(app)
+
+DATABASE = 'database.db'
+
+def get_db():
+    db = sqlite3.connect(DATABASE)
+    db.row_factory = sqlite3.Row
+    return db
+
+def init_db():
+    with app.app_context():
+        db = get_db()
+        with app.open_resource('../banco/schema.sql', mode='r') as f:
+            db.cursor().executescript(f.read())
+        db.commit()
+
+ph = PasswordHasher()
+def hash_password(password):
+    
+    senha_com_pepper = (password + os.getenv('PEPPER')).encode('utf-8')
+    return  ph.hash(senha_com_pepper)
+
+def verify_password(stored_hash, provided_password):
+    senha_com_pepper = (provided_password + os.getenv('PEPPER')).encode('utf-8')
+    try:
+        ph.verify(stored_hash, senha_com_pepper)
+        return True
+    except:
+        return False
+
+@app.route('/initdb')
+def init_database():
+    init_db()
+    return "Database iniciado"
+
+@app.route('/add_user', methods=['POST'])
+def novo_usuario():
+    if request.method == 'POST':
+        usuario = request.json.get('usuario')
+        senha = request.json.get('senha')
+        if not usuario or not senha:
+            return jsonify({'erro': 'Usuário e senha são obrigatórios'}), 400
+        senha_hash = hash_password(senha)
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO usuarios (usuario, senha_hash) VALUES (?, ?)", (usuario, senha_hash))
+            db.commit()
+            return jsonify({'mensagem': 'Usuário criado com sucesso'}), 201
+        except sqlite3.Error as e:
+            return jsonify({'erro': str(e)}), 500
+        finally:
+            db.close()
+
+@app.route('/login', methods=['POST'])
+def login():
+    if request.method == 'POST':
+        usuario = request.json.get('usuario')
+        senha = request.json.get('senha')
+        if not usuario or not senha:
+            return jsonify({'erro': 'Usuário e senha são obrigatórios'}), 400
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("SELECT senha_hash FROM usuarios WHERE usuario = ?", (usuario, ))
+            row = cursor.fetchone()
+            if row and verify_password(row['senha_hash'], senha):
+                return jsonify({'mensagem': 'Login bem-sucedido'}), 200
+            else:
+                return jsonify({'erro': 'Usuário ou senha inválidos'}), 401
+        except sqlite3.Error as e:
+            return jsonify({'erro': str(e)}), 500
+        finally:
+            db.close()
+
+@app.route('/add_semaforo', methods=['POST'])
+def novo_semaforo():
+    if request.method == 'POST':
+        localizacao = request.json.get('localizacao')
+        estado = request.json.get('estado')
+        tempo = request.json.get('tempo')
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO semaforos (localizacao, estado, tempo) VALUES (?, ?, ?)", (localizacao, estado, tempo))
+            db.commit()
+            return jsonify({'mensagem': 'Semaforo criado com sucesso'}), 201
+        except sqlite3.Error as e:
+            return jsonify({'erro': str(e)}), 500
+        finally:
+            db.close()
+
+@app.route('/get_semaforo/<int:id_semaforo>', methods=['GET'])
+def busca_semaforo(id_semaforo):
+    if request.method == 'GET':
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("SELECT * FORM semaforos WHERE id = ?", (id_semaforo, ))
+            dado = cursor.fetchone()
+            if dado:
+                return jsonify(dict(dado)), 200
+            else:
+                return jsonify({'erro': 'Semáforo não encontrado'}), 404
+        except sqlite3.Error as e:
+            return jsonify({'erro': str(e)}), 500
+        finally:
+            db.close()
+
+@app.route('/semaforos', methods=['GET'])
+def get_semaforos():
+    if request.method == 'GET':
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("SELECT * FORM semaforos")
+            dado = cursor.fetchall()
+            return jsonify(dict(dado)), 200
+        except sqlite3.Error as e:
+            return jsonify({'erro': str(e)}), 500
+        finally:
+            db.close()
+
+@app.route('/update_semaforo/<int:id_semaforo>', methods=['PUT'])
+def busca_semaforo(id_semaforo):
+    if request.method == 'PUT':
+        localizacao = request.json.get('localizacao')
+        estado = request.json.get('estado')
+        tempo = request.json.get('tempo')
+        if not localizacao or not estado or not tempo:
+            return jsonify({'erro': 'Todos os campos são obrigatórios'}), 400
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("UPDATE semaforos SET localizacao = ?, estado = ?, tempo = ? WHERE id = ?", (localizacao, estado, tempo, id_semaforo))
+            db.commit()
+            return jsonify({'mensagem': 'Semáforo atualizado com sucesso'}), 200
+        except sqlite3.Error as e:
+            return jsonify({'erro': str(e)}), 500
+        finally:
+            db.close()
+
+@app.route('/add_poste', methods=['POST'])
+def novo_poste():
+    if request.method == 'POST':
+        localizacao = request.json.get('localizacao')
+        estado = request.json.get('estado')
+        atomatico = request.json.get('atomatico')
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO postes (localizacao, estado, atomatico) VALUES (?, ?, ?)", (localizacao, estado, atomatico))
+            db.commit()
+            return jsonify({'mensagem': 'Poste criado com sucesso'}), 201
+        except sqlite3.Error as e:
+            return jsonify({'erro': str(e)}), 500
+        finally:
+            db.close()
+
+@app.route('/get_poste/<int:id_poste>', methods=['GET'])
+def busca_poste(id_poste):
+    if request.method == 'GET':
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("SELECT * FORM postes WHERE id = ?", (id_poste, ))
+            dado = cursor.fetchone()
+            if dado:
+                return jsonify(dict(dado)), 200
+            else:
+                return jsonify({'erro': 'Poste não encontrado'}), 404
+        except sqlite3.Error as e:
+            return jsonify({'erro': str(e)}), 500
+        finally:
+            db.close()
+
+@app.route('/postes', methods=['GET'])
+def get_postes():
+    if request.method == 'GET':
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("SELECT * FORM postes")
+            dado = cursor.fetchall()
+            return jsonify(dict(dado)), 200
+        except sqlite3.Error as e:
+            return jsonify({'erro': str(e)}), 500
+        finally:
+            db.close()
+
+@app.route('/update_poste/<int:id_poste>', methods=['PUT'])
+def busca_semaforo(id_poste):
+    if request.method == 'PUT':
+        localizacao = request.json.get('localizacao')
+        estado = request.json.get('estado')
+        atomatico = request.json.get('atomatico')
+        if not localizacao or not estado or not atomatico:
+            return jsonify({'erro': 'Todos os campos são obrigatórios'}), 400
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute("UPDATE postes SET localizacao = ?, estado = ?, atomatico = ? WHERE id = ?", (localizacao, estado, atomatico, id_poste))
+            db.commit()
+            return jsonify({'mensagem': 'Poste atualizado com sucesso'}), 200
+        except sqlite3.Error as e:
+            return jsonify({'erro': str(e)}), 500
+        finally:
+            db.close()
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -28,8 +239,8 @@ else:
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
-SEMAFORO_URL ="http://127.0.0.1:5001/estado"
-ILUMINACAO_URL = "http://127.0.0.1:5002/estado"
+SEMAFORO_URL = "http://semaforo:5001/estado"
+ILUMINACAO_URL = "http://iluminacao:5002/estado"
 
 SLOW_THRESOLD = 1.0
 @app.route("/")
