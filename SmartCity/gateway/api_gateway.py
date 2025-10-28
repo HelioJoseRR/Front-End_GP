@@ -106,7 +106,7 @@ def busca_semaforo(id_semaforo):
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("SELECT * FORM semaforos WHERE id = ?", (id_semaforo, ))
+            cursor.execute("SELECT * FROM semaforos WHERE id = ?", (id_semaforo, ))
             dado = cursor.fetchone()
             if dado:
                 return jsonify(dict(dado)), 200
@@ -123,7 +123,7 @@ def get_semaforos():
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("SELECT * FORM semaforos")
+            cursor.execute("SELECT * FROM semaforos")
             dado = cursor.fetchall()
             return jsonify(dict(dado)), 200
         except sqlite3.Error as e:
@@ -132,7 +132,7 @@ def get_semaforos():
             db.close()
 
 @app.route('/update_semaforo/<int:id_semaforo>', methods=['PUT'])
-def busca_semaforo(id_semaforo):
+def update_semaforo(id_semaforo):
     if request.method == 'PUT':
         localizacao = request.json.get('localizacao')
         estado = request.json.get('estado')
@@ -173,7 +173,7 @@ def busca_poste(id_poste):
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("SELECT * FORM postes WHERE id = ?", (id_poste, ))
+            cursor.execute("SELECT * FROM postes WHERE id = ?", (id_poste, ))
             dado = cursor.fetchone()
             if dado:
                 return jsonify(dict(dado)), 200
@@ -190,7 +190,7 @@ def get_postes():
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("SELECT * FORM postes")
+            cursor.execute("SELECT * FROM postes")
             dado = cursor.fetchall()
             return jsonify(dict(dado)), 200
         except sqlite3.Error as e:
@@ -199,7 +199,7 @@ def get_postes():
             db.close()
 
 @app.route('/update_poste/<int:id_poste>', methods=['PUT'])
-def busca_semaforo(id_poste):
+def update_poste(id_poste):
     if request.method == 'PUT':
         localizacao = request.json.get('localizacao')
         estado = request.json.get('estado')
@@ -289,7 +289,7 @@ def gateway_semaforo():
 @app.route("/api/iluminacao", methods = ["GET"])
 def gateway_iluminacao():
     try:
-        logging.info("Requisiçõ recebida em /api/iluminacao")
+        logging.info("Requisição recebida em /api/iluminacao")
         dados = chamar_servico("Iluminação", ILUMINACAO_URL)
 
         return jsonify({"mensagem": "Resposta do API Gateway - Iluminação", "dados": dados})
@@ -351,15 +351,15 @@ def comando_iluminacao():
         logging.error(f"Erro ao comunicar com o serviço de iluminação: {e}")
         return jsonify({"erro": "Não foi possível alterar o modo de iluminação"}), 500
 
-@app.route("/api/iluminacao/modo", methods=["GET"])
-def gateway_iluminacao_modo():
+@app.route("/api/semaforo/modo", methods=["GET"])
+def gateway_semaforo_modo():
     try:
-        url_modo = ILUMINACAO_URL.replace("/estado", "") + "/modo"
+        url_modo = SEMAFORO_URL.replace("/estado", "") + "/modo"
         resposta = requests.get(url_modo, timeout=5)
         return jsonify(resposta.json()), resposta.status_code
     except Exception as e:
-        logging.error(f"Erro ao obter modo da iluminação: {e}")
-        return jsonify({"erro": "Não foi possível obter o modo da iluminação"}), 500
+        logging.error(f"Erro ao obter modo do semáforo: {e}")
+        return jsonify({"erro": "Não foi possível obter o modo do semáforo"}), 500
 
 if __name__ == "__main__":
     logging.info("Iniciando API Gateway...")
