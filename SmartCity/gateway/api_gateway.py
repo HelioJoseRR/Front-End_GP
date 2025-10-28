@@ -1,47 +1,53 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, session, redirect, url_for
 from flask_cors import CORS
 import requests
 import logging
 import time
-import sqlite3
+import pymysql
 from argon2 import PasswordHasher
 import os
+from functools import wraps
 
 app = Flask(__name__)
 CORS(app)
 
-DATABASE = 'database.db'
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
 
 def get_db():
-    db = sqlite3.connect(DATABASE)
-    db.row_factory = sqlite3.Row
+    db = pymysql.connect(
+        host=os.getenv('DB_HOST', 'localhost'),
+        port=int(os.getenv('DB_PORT', 3306)),
+        user=os.getenv('DB_USER', 'smartcity_user'),
+        password=os.getenv('DB_PASSWORD', 'smartcity_pass'),
+        database=os.getenv('DB_NAME', 'smartcity'),
+        cursorclass=pymysql.cursors.DictCursor
+    )
     return db
-
-def init_db():
-    with app.app_context():
-        db = get_db()
-        with app.open_resource('../banco/schema.sql', mode='r') as f:
-            db.cursor().executescript(f.read())
-        db.commit()
 
 ph = PasswordHasher()
 def hash_password(password):
     
-    senha_com_pepper = (password + os.getenv('PEPPER')).encode('utf-8')
+    senha_com_pepper = (password + os.getenv('PEPPER', '')).encode('utf-8')
     return  ph.hash(senha_com_pepper)
 
 def verify_password(stored_hash, provided_password):
-    senha_com_pepper = (provided_password + os.getenv('PEPPER')).encode('utf-8')
+    senha_com_pepper = (provided_password + os.getenv('PEPPER', '')).encode('utf-8')
     try:
         ph.verify(stored_hash, senha_com_pepper)
         return True
     except Exception:
         return False
 
-@app.route('/initdb')
-def init_database():
-    init_db()
-    return "Database iniciado"
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'usuario' not in session:
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/add_user', methods=['POST'])
 def novo_usuario():
@@ -54,10 +60,10 @@ def novo_usuario():
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("INSERT INTO usuarios (usuario, senha_hash) VALUES (?, ?)", (usuario, senha_hash))
+            cursor.execute("INSERT INTO usuarios (usuario, senha_hash) VALUES (%s, %s)", (usuario, senha_hash))
             db.commit()
             return jsonify({'mensagem': 'Usuário criado com sucesso'}), 201
-        except sqlite3.Error as e:
+        except pymysql.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
             db.close()
@@ -72,18 +78,25 @@ def login():
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("SELECT senha_hash FROM usuarios WHERE usuario = ?", (usuario, ))
+            cursor.execute("SELECT senha_hash FROM usuarios WHERE usuario = %s", (usuario, ))
             row = cursor.fetchone()
             if row and verify_password(row['senha_hash'], senha):
+                session['usuario'] = usuario
                 return jsonify({'mensagem': 'Login bem-sucedido'}), 200
             else:
                 return jsonify({'erro': 'Usuário ou senha inválidos'}), 401
-        except sqlite3.Error as e:
+        except pymysql.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
             db.close()
 
+@app.route('/logout')
+def logout():
+    session.pop('usuario', None)
+    return redirect(url_for('index'))
+
 @app.route('/add_semaforo', methods=['POST'])
+@login_required
 def novo_semaforo():
     if request.method == 'POST':
         localizacao = request.json.get('localizacao')
@@ -92,32 +105,34 @@ def novo_semaforo():
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("INSERT INTO semaforos (localizacao, estado, tempo) VALUES (?, ?, ?)", (localizacao, estado, tempo))
+            cursor.execute("INSERT INTO semaforos (localizacao, estado, tempo) VALUES (%s, %s, %s)", (localizacao, estado, tempo))
             db.commit()
             return jsonify({'mensagem': 'Semaforo criado com sucesso'}), 201
-        except sqlite3.Error as e:
+        except pymysql.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
             db.close()
 
 @app.route('/get_semaforo/<int:id_semaforo>', methods=['GET'])
+@login_required
 def busca_semaforo(id_semaforo):
     if request.method == 'GET':
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("SELECT * FROM semaforos WHERE id = ?", (id_semaforo, ))
+            cursor.execute("SELECT * FROM semaforos WHERE id = %s", (id_semaforo, ))
             dado = cursor.fetchone()
             if dado:
-                return jsonify(dict(dado)), 200
+                return jsonify(dado), 200
             else:
                 return jsonify({'erro': 'Semáforo não encontrado'}), 404
-        except sqlite3.Error as e:
+        except pymysql.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
             db.close()
 
 @app.route('/semaforos', methods=['GET'])
+@login_required
 def get_semaforos():
     if request.method == 'GET':
         try:
@@ -125,13 +140,14 @@ def get_semaforos():
             cursor = db.cursor()
             cursor.execute("SELECT * FROM semaforos")
             dado = cursor.fetchall()
-            return jsonify([dict(row) for row in dado]), 200
-        except sqlite3.Error as e:
+            return jsonify(dado), 200
+        except pymysql.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
             db.close()
 
 @app.route('/update_semaforo/<int:id_semaforo>', methods=['PUT'])
+@login_required
 def update_semaforo(id_semaforo):
     if request.method == 'PUT':
         localizacao = request.json.get('localizacao')
@@ -142,15 +158,16 @@ def update_semaforo(id_semaforo):
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("UPDATE semaforos SET localizacao = ?, estado = ?, tempo = ? WHERE id = ?", (localizacao, estado, tempo, id_semaforo))
+            cursor.execute("UPDATE semaforos SET localizacao = %s, estado = %s, tempo = %s WHERE id = %s", (localizacao, estado, tempo, id_semaforo))
             db.commit()
             return jsonify({'mensagem': 'Semáforo atualizado com sucesso'}), 200
-        except sqlite3.Error as e:
+        except pymysql.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
             db.close()
 
 @app.route('/add_poste', methods=['POST'])
+@login_required
 def novo_poste():
     if request.method == 'POST':
         localizacao = request.json.get('localizacao')
@@ -159,32 +176,34 @@ def novo_poste():
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("INSERT INTO postes (localizacao, estado, atomatico) VALUES (?, ?, ?)", (localizacao, estado, atomatico))
+            cursor.execute("INSERT INTO postes (localizacao, estado, atomatico) VALUES (%s, %s, %s)", (localizacao, estado, atomatico))
             db.commit()
             return jsonify({'mensagem': 'Poste criado com sucesso'}), 201
-        except sqlite3.Error as e:
+        except pymysql.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
             db.close()
 
 @app.route('/get_poste/<int:id_poste>', methods=['GET'])
+@login_required
 def busca_poste(id_poste):
     if request.method == 'GET':
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("SELECT * FROM postes WHERE id = ?", (id_poste, ))
+            cursor.execute("SELECT * FROM postes WHERE id = %s", (id_poste, ))
             dado = cursor.fetchone()
             if dado:
-                return jsonify(dict(dado)), 200
+                return jsonify(dado), 200
             else:
                 return jsonify({'erro': 'Poste não encontrado'}), 404
-        except sqlite3.Error as e:
+        except pymysql.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
             db.close()
 
 @app.route('/postes', methods=['GET'])
+@login_required
 def get_postes():
     if request.method == 'GET':
         try:
@@ -192,13 +211,14 @@ def get_postes():
             cursor = db.cursor()
             cursor.execute("SELECT * FROM postes")
             dado = cursor.fetchall()
-            return jsonify([dict(row) for row in dado]), 200
-        except sqlite3.Error as e:
+            return jsonify(dado), 200
+        except pymysql.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
             db.close()
 
 @app.route('/update_poste/<int:id_poste>', methods=['PUT'])
+@login_required
 def update_poste(id_poste):
     if request.method == 'PUT':
         localizacao = request.json.get('localizacao')
@@ -209,10 +229,10 @@ def update_poste(id_poste):
         try:
             db = get_db()
             cursor = db.cursor()
-            cursor.execute("UPDATE postes SET localizacao = ?, estado = ?, atomatico = ? WHERE id = ?", (localizacao, estado, atomatico, id_poste))
+            cursor.execute("UPDATE postes SET localizacao = %s, estado = %s, atomatico = %s WHERE id = %s", (localizacao, estado, atomatico, id_poste))
             db.commit()
             return jsonify({'mensagem': 'Poste atualizado com sucesso'}), 200
-        except sqlite3.Error as e:
+        except pymysql.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
             db.close()
@@ -243,9 +263,18 @@ SEMAFORO_URL = "http://semaforo:5001/estado"
 ILUMINACAO_URL = "http://iluminacao:5002/estado"
 
 SLOW_THRESOLD = 1.0
+
 @app.route("/")
 def index():
+    if 'usuario' in session:
+        return redirect(url_for('dashboard'))
+    return send_from_directory("frontend", "login.html")
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
     return send_from_directory("frontend", "index.html")
+
 def chamar_servico(nome, url):
     try:
         inicio = time.time()
@@ -276,6 +305,7 @@ def chamar_servico(nome, url):
         raise
 
 @app.route("/api/semaforo", methods = ["GET"])
+@login_required
 def gateway_semaforo():
     try:
         logging.info("Requisição recebida em /api/semaforo")
@@ -287,6 +317,7 @@ def gateway_semaforo():
         return jsonify({"erro": str(e)}), 500
 
 @app.route("/api/iluminacao", methods = ["GET"])
+@login_required
 def gateway_iluminacao():
     try:
         logging.info("Requisição recebida em /api/iluminacao")
@@ -298,6 +329,7 @@ def gateway_iluminacao():
         return jsonify({"erro": str(e)}), 500
 
 @app.route("/api/semaforo/modo", methods = ["POST"])
+@login_required
 def comando_semaforo():
 
     dados = request.get_json()
@@ -325,6 +357,7 @@ def comando_semaforo():
         return jsonify({"erro": "Não foi possível alterar o modo do semáforo"}), 500
 
 @app.route("/api/iluminacao/modo", methods = ["POST"])
+@login_required
 def comando_iluminacao():
     
     dados = request.get_json()
@@ -352,6 +385,7 @@ def comando_iluminacao():
         return jsonify({"erro": "Não foi possível alterar o modo de iluminação"}), 500
 
 @app.route("/api/semaforo/modo", methods=["GET"])
+@login_required
 def gateway_semaforo_modo():
     try:
         url_modo = SEMAFORO_URL.replace("/estado", "") + "/modo"
@@ -362,6 +396,7 @@ def gateway_semaforo_modo():
         return jsonify({"erro": "Não foi possível obter o modo do semáforo"}), 500
 
 @app.route("/api/iluminacao/modo", methods=["GET"])
+@login_required
 def gateway_iluminacao_modo():
     try:
         url_modo = ILUMINACAO_URL.replace("/estado", "") + "/modo"

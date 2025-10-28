@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Cidade Inteligente</title>
+    <link rel="stylesheet" href="../static/login.css">
+</head>
+<body>
+    <div class="sol"></div>
+    <div class="lua"></div>
+    <div class="estrelas"></div>
+    <div class="nuvens"></div>
+    
+    <div class="login-container">
+        <div class="login-card">
+            <h1>Cidade Inteligente</h1>
+            <p class="subtitle">Sistema de Gerenciamento Urbano</p>
+            
+            <div id="login-form" class="form-container active">
+                <h2>Entrar</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="input-group">
+                        <label for="login-usuario">Usuário</label>
+                        <input type="text" id="login-usuario" name="usuario" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label for="login-senha">Senha</label>
+                        <input type="password" id="login-senha" name="senha" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn-primary">Entrar</button>
+                </form>
+                <p class="toggle-text">
+                    Não tem uma conta? 
+                    <a href="#" onclick="toggleForms(event)">Registrar-se</a>
+                </p>
+            </div>
+            
+            <div id="register-form" class="form-container">
+                <h2>Registrar</h2>
+                <form onsubmit="handleRegister(event)">
+                    <div class="input-group">
+                        <label for="register-usuario">Usuário</label>
+                        <input type="text" id="register-usuario" name="usuario" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label for="register-senha">Senha</label>
+                        <input type="password" id="register-senha" name="senha" required autocomplete="new-password">
+                    </div>
+                    <div class="input-group">
+                        <label for="register-senha-confirm">Confirmar Senha</label>
+                        <input type="password" id="register-senha-confirm" name="senha-confirm" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="btn-primary">Registrar</button>
+                </form>
+                <p class="toggle-text">
+                    Já tem uma conta? 
+                    <a href="#" onclick="toggleForms(event)">Entrar</a>
+                </p>
+            </div>
+            
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+    
+    <script src="../static/login.js"></script>
+</body>
+</html>
