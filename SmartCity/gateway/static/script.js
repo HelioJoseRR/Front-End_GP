@@ -120,7 +120,7 @@ function atualizarPoste() {
         luzPoste.classList.add("desligado");
     }
     else if(modoIluminacao === "ligar"){
-        luzPoste.classList.add("acesa")
+        luzPoste.classList.add("acesa");
     }
 }
 

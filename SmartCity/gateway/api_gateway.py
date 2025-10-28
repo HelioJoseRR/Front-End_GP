@@ -35,7 +35,7 @@ def verify_password(stored_hash, provided_password):
     try:
         ph.verify(stored_hash, senha_com_pepper)
         return True
-    except:
+    except Exception:
         return False
 
 @app.route('/initdb')
@@ -125,7 +125,7 @@ def get_semaforos():
             cursor = db.cursor()
             cursor.execute("SELECT * FROM semaforos")
             dado = cursor.fetchall()
-            return jsonify(dict(dado)), 200
+            return jsonify([dict(row) for row in dado]), 200
         except sqlite3.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
@@ -192,7 +192,7 @@ def get_postes():
             cursor = db.cursor()
             cursor.execute("SELECT * FROM postes")
             dado = cursor.fetchall()
-            return jsonify(dict(dado)), 200
+            return jsonify([dict(row) for row in dado]), 200
         except sqlite3.Error as e:
             return jsonify({'erro': str(e)}), 500
         finally:
@@ -257,16 +257,16 @@ def chamar_servico(nome, url):
 
         if nome == "Iluminação":
             if estado in ["falha", "manutenção"]:
-                logging.error(f"{nome} em problema {estado}")
+                logger.error(f"{nome} em problema {estado}")
             elif estado in ["ligado", "desligado"]:
-                logging.info(f"{nome} estado forcado: {estado}")
+                logger.info(f"{nome} estado forcado: {estado}")
             else:
-                logging.info(f"{nome} estado normal: {estado}")
+                logger.info(f"{nome} estado normal: {estado}")
         elif nome == "Semáforo":
             if estado in ["intermitente", "desligado"]:
-                logging.error(f"{nome} em problema: {estado}")
+                logger.error(f"{nome} em problema: {estado}")
             else:
-                logging.info(f"{nome} estado normal: {estado}")
+                logger.info(f"{nome} estado normal: {estado}")
         
         if duracao > SLOW_THRESOLD:
             logging.warning(f"{nome} demorou {duracao:.2f}s para responder.")
@@ -360,6 +360,16 @@ def gateway_semaforo_modo():
     except Exception as e:
         logging.error(f"Erro ao obter modo do semáforo: {e}")
         return jsonify({"erro": "Não foi possível obter o modo do semáforo"}), 500
+
+@app.route("/api/iluminacao/modo", methods=["GET"])
+def gateway_iluminacao_modo():
+    try:
+        url_modo = ILUMINACAO_URL.replace("/estado", "") + "/modo"
+        resposta = requests.get(url_modo, timeout=5)
+        return jsonify(resposta.json()), resposta.status_code
+    except Exception as e:
+        logging.error(f"Erro ao obter modo da iluminação: {e}")
+        return jsonify({"erro": "Não foi possível obter o modo da iluminação"}), 500
 
 if __name__ == "__main__":
     logging.info("Iniciando API Gateway...")

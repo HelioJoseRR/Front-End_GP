@@ -38,7 +38,7 @@ def mudar_modo():
     if not dados or "modo" not in dados:
         return jsonify({"erro": "informe o modo no JSON, ex: {\"modo\": \"intermitente\"}"}), 400
     
-    novo_modo = dados ["modo"]
+    novo_modo = dados["modo"]
 
     if novo_modo not in ["normal", "intermitente", "falha"]:
         return jsonify({"erro": "Modo inválido. Use normal, intermitente ou falha"}), 400
