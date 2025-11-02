@@ -21,6 +21,7 @@ Um sistema integrado de **gerenciamento inteligente de cidades** com foco em **s
 - [API Endpoints](#api-endpoints)
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Desenvolvimento](#desenvolvimento)
+- [Cálculos de Eficiência](#cálculos-de-eficiência)
 - [Contribuindo](#contribuindo)
 
 ---
