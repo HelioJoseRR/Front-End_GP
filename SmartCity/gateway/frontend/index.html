@@ -2,124 +2,202 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Dashboard - Cidade Inteligente</title>
-    <link rel="stylesheet" href="../static/style.css?v=2">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../static/style_bootstrap.css?v=1">
 </head>
-<body>
-    <div class="header">
-        <h1>🏙️ Cidade Inteligente - Dashboard</h1>
-        <button onclick="logout()" class="logout-btn">Sair</button>
-    </div>
-    
-    <div class="container">
-        <div class="sidebar">
-            <h3>Regiões</h3>
-            <div id="regioes-list" class="list-container">
-                <p class="loading">Carregando regiões...</p>
-            </div>
-            <button onclick="showAddRegiao()" class="btn-add">➕ Nova Região</button>
+<body class="bg-dark text-light">
+    <!-- FIXED FILE -->
+    <!-- Header -->
+    <nav class="navbar navbar-dark bg-darker border-bottom border-info">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">🏙️ Cidade Inteligente - Dashboard</span>
+            <button onclick="logout()" class="btn btn-danger btn-sm">Sair</button>
         </div>
-        
-        <div class="main-content">
-            <div class="nav-tabs">
-                <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
-                <button class="tab-btn" onclick="switchTab('semaforos')">🚦 Semáforos</button>
-                <button class="tab-btn" onclick="switchTab('postes')">💡 Postes</button>
+    </nav>
+    
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3 col-xl-2 mb-4">
+                <div class="card bg-darker border-info">
+                    <div class="card-body">
+                        <h5 class="card-title text-info">Regiões</h5>
+                        <div id="regioes-list" class="list-group list-group-flush mb-3">
+                            <p class="text-muted">Carregando regiões...</p>
+                        </div>
+                        <button onclick="showAddRegiao()" class="btn btn-info btn-sm w-100">➕ Nova Região</button>
+                    </div>
+                </div>
             </div>
             
-            <!-- Dashboard Tab -->
-            <div id="dashboard-tab" class="tab-content active">
-                <div id="region-selected" class="region-info">
-                    <p>Selecione uma região para ver o dashboard</p>
+            <!-- Main Content -->
+            <div class="col-lg-9 col-xl-10">
+                <!-- Tabs -->
+                <ul class="nav nav-tabs mb-4 border-bottom border-info" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active text-info" onclick="switchTab('dashboard')" id="dashboard-tab-btn">📊 Dashboard</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-info" onclick="switchTab('semaforos')" id="semaforos-tab-btn">🚦 Semáforos</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-info" onclick="switchTab('postes')" id="postes-tab-btn">💡 Postes</button>
+                    </li>
+                </ul>
+                
+                <!-- Dashboard Tab -->
+                <div id="dashboard-tab" class="tab-content active">
+                    <div id="region-selected" class="alert alert-info" role="alert">
+                        <p class="mb-0">Selecione uma região para ver o dashboard</p>
+                    </div>
+                    <div id="dashboard-content" style="display: none;">
+                        <!-- Stats Grid -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card bg-darker border-info h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-info">📊 Total Semáforos</h6>
+                                        <p id="total-semaforos" class="fs-4 fw-bold text-success mb-0">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card bg-darker border-info h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-info">💡 Total Postes</h6>
+                                        <p id="total-postes" class="fs-4 fw-bold text-success mb-0">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card bg-darker border-info h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-info">📈 Efic. Semáforos</h6>
+                                        <p id="eficiencia-semaforos" class="fs-4 fw-bold text-warning mb-0">0%</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card bg-darker border-info h-100">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-info">📈 Efic. Postes</h6>
+                                        <p id="eficiencia-postes" class="fs-4 fw-bold text-warning mb-0">0%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Top Lists -->
+                        <div class="row g-3">
+                            <div class="col-lg-6">
+                                <div class="card bg-darker border-success">
+                                    <div class="card-header bg-dark border-success">
+                                        <h6 class="mb-0 text-success">🏆 Top 5 Semáforos Eficientes</h6>
+                                    </div>
+                                    <div id="top-semaforos-eficientes" class="list-group list-group-flush">
+                                        <p class="text-muted p-3">Carregando...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card bg-darker border-danger">
+                                    <div class="card-header bg-dark border-danger">
+                                        <h6 class="mb-0 text-danger">⚠️ Top 5 Semáforos Ineficientes</h6>
+                                    </div>
+                                    <div id="top-semaforos-ineficientes" class="list-group list-group-flush">
+                                        <p class="text-muted p-3">Carregando...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card bg-darker border-success">
+                                    <div class="card-header bg-dark border-success">
+                                        <h6 class="mb-0 text-success">🏆 Top 5 Postes Eficientes</h6>
+                                    </div>
+                                    <div id="top-postes-eficientes" class="list-group list-group-flush">
+                                        <p class="text-muted p-3">Carregando...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card bg-darker border-danger">
+                                    <div class="card-header bg-dark border-danger">
+                                        <h6 class="mb-0 text-danger">⚠️ Top 5 Postes Ineficientes</h6>
+                                    </div>
+                                    <div id="top-postes-ineficientes" class="list-group list-group-flush">
+                                        <p class="text-muted p-3">Carregando...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="dashboard-content" style="display: none;">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <h3>📊 Total de Semáforos</h3>
-                            <p id="total-semaforos" class="stat-value">0</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>💡 Total de Postes</h3>
-                            <p id="total-postes" class="stat-value">0</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>📈 Eficiência Média (Semáforos)</h3>
-                            <p id="eficiencia-semaforos" class="stat-value">0%</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>📈 Eficiência Média (Postes)</h3>
-                            <p id="eficiencia-postes" class="stat-value">0%</p>
+                
+                <!-- Semáforos Tab -->
+                <div id="semaforos-tab" class="tab-content" style="display: none;">
+                    <div class="card bg-darker border-info mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">Gerenciar Semáforos</h5>
+                            <div class="row g-2">
+                                <div class="col-md-5">
+                                    <input type="text" id="semaforoLocalizacao" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Localização (ex: Av. Principal)">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" id="semaforoTempo" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Tempo de ciclo (segundos)">
+                                </div>
+                                <div class="col-md-3">
+                                    <button onclick="adicionarSemaforo()" class="btn btn-info btn-sm w-100">➕ Adicionar</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="top-lists">
-                        <div class="top-section">
-                            <h3>🚦 Top 5 Semáforos Mais Eficientes</h3>
-                            <div id="top-semaforos-eficientes" class="list-container">
-                                <p class="loading">Carregando...</p>
-                            </div>
+                    <div class="card bg-darker border-info">
+                        <div class="card-header bg-dark border-info">
+                            <h6 class="mb-0 text-info">Semáforos Cadastrados</h6>
                         </div>
-                        <div class="top-section">
-                            <h3>⚠️ Top 5 Semáforos Menos Eficientes</h3>
-                            <div id="top-semaforos-ineficientes" class="list-container">
-                                <p class="loading">Carregando...</p>
-                            </div>
+                        <div id="semaforos-list" class="list-group list-group-flush">
+                            <p class="text-muted p-3">Selecione uma região primeiro</p>
                         </div>
-                        <div class="top-section">
-                            <h3>💡 Top 5 Postes Mais Eficientes</h3>
-                            <div id="top-postes-eficientes" class="list-container">
-                                <p class="loading">Carregando...</p>
-                            </div>
-                        </div>
-                        <div class="top-section">
-                            <h3>⚠️ Top 5 Postes Menos Eficientes</h3>
-                            <div id="top-postes-ineficientes" class="list-container">
-                                <p class="loading">Carregando...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Semáforos Tab -->
-            <div id="semaforos-tab" class="tab-content">
-                <div class="section">
-                    <h2>Gerenciar Semáforos</h2>
-                    <div class="form-group">
-                        <input type="text" id="semaforoLocalizacao" placeholder="Localização (ex: Av. Principal)">
-                        <input type="number" id="semaforoTempo" placeholder="Tempo de ciclo (segundos)">
-                        <button onclick="adicionarSemaforo()" class="btn-add">➕ Adicionar Semáforo</button>
                     </div>
                 </div>
                 
-                <div class="section">
-                    <h3>Semáforos Cadastrados</h3>
-                    <div id="semaforos-list" class="list-container">
-                        <p class="loading">Selecione uma região primeiro</p>
+                <!-- Postes Tab -->
+                <div id="postes-tab" class="tab-content" style="display: none;">
+                    <div class="card bg-darker border-info mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title text-info">Gerenciar Postes</h5>
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-6">
+                                    <input type="text" id="posteLocalizacao" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Localização (ex: Rua A, nº 100)">
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="posteAutomatico">
+                                        <label class="form-check-label" for="posteAutomatico">
+                                            Modo Automático
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <button onclick="adicionarPoste()" class="btn btn-info btn-sm w-100">➕ Adicionar</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Postes Tab -->
-            <div id="postes-tab" class="tab-content">
-                <div class="section">
-                    <h2>Gerenciar Postes</h2>
-                    <div class="form-group">
-                        <input type="text" id="posteLocalizacao" placeholder="Localização (ex: Rua A, nº 100)">
-                        <label>
-                            <input type="checkbox" id="posteAutomatico"> Modo Automático
-                        </label>
-                        <button onclick="adicionarPoste()" class="btn-add">➕ Adicionar Poste</button>
-                    </div>
-                </div>
-                
-                <div class="section">
-                    <h3>Postes de Iluminação</h3>
-                    <div id="postes-list" class="list-container">
-                        <p class="loading">Selecione uma região primeiro</p>
+                    
+                    <div class="card bg-darker border-info">
+                        <div class="card-header bg-dark border-info">
+                            <h6 class="mb-0 text-info">Postes de Iluminação</h6>
+                        </div>
+                        <div id="postes-list" class="list-group list-group-flush">
+                            <p class="text-muted p-3">Selecione uma região primeiro</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -127,26 +205,41 @@
     </div>
     
     <!-- Modal para adicionar região -->
-    <div id="regiao-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Criar Nova Região</h2>
-            <div class="form-group">
-                <input type="text" id="regiao-nome" placeholder="Nome da Região">
-                <input type="text" id="regiao-descricao" placeholder="Descrição (opcional)">
-                <button onclick="criarRegiao()" class="btn-primary">Criar</button>
+    <div class="modal fade" id="regiao-modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-darker border-info">
+                <div class="modal-header border-info">
+                    <h5 class="modal-title text-info">Criar Nova Região</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="regiao-nome" class="form-control form-control-sm bg-dark text-light border-secondary mb-2" placeholder="Nome da Região">
+                    <input type="text" id="regiao-descricao" class="form-control form-control-sm bg-dark text-light border-secondary" placeholder="Descrição (opcional)">
+                </div>
+                <div class="modal-footer border-info">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-info btn-sm" onclick="criarRegiao()">Criar</button>
+                </div>
             </div>
         </div>
     </div>
     
     <!-- Modal para detalhes -->
-    <div id="detail-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close" onclick="closeDetailModal()">&times;</span>
-            <div id="detail-content"></div>
+    <div class="modal fade" id="detail-modal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-darker border-info">
+                <div class="modal-header border-info">
+                    <h5 class="modal-title text-info">Detalhes</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="detail-content"></div>
+                </div>
+            </div>
         </div>
     </div>
-    
-    <script src="../static/script_simple.js?v=6"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../static/script_simple_new.js?v=8"></script>
 </body>
 </html>
