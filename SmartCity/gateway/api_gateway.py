@@ -279,45 +279,46 @@ def login_required(f):
 
 @app.route('/add_user', methods=['POST'])
 def novo_usuario():
-    if request.method == 'POST':
-        usuario = request.json.get('usuario')
-        senha = request.json.get('senha')
-        if not usuario or not senha:
-            return jsonify({'erro': 'Usuário e senha são obrigatórios'}), 400
-        senha_hash = hash_password(senha)
-        db = None
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            cursor.execute("INSERT INTO usuarios (usuario, senha_hash) VALUES (%s, %s)", (usuario, senha_hash))
-            db.commit()
-            return jsonify({'mensagem': 'Usuário criado com sucesso'}), 201
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
-            if db:
-                db.close()
+    usuario = request.json.get('usuario')
+    senha = request.json.get('senha')
+    if not usuario or not senha:
+        return jsonify({'erro': 'Usuário e senha são obrigatórios'}), 400
+    
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO usuarios (usuario, senha_hash) VALUES (%s, %s)", 
+                      (usuario, hash_password(senha)))
+        db.commit()
+        return jsonify({'mensagem': 'Usuário criado com sucesso'}), 201
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
+            db.close()
 
 @app.route('/login', methods=['POST'])
 def login():
-    if request.method == 'POST':
-        usuario = request.json.get('usuario')
-        senha = request.json.get('senha')
-        if not usuario or not senha:
-            return jsonify({'erro': 'Usuário e senha são obrigatórios'}), 400
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            cursor.execute("SELECT senha_hash FROM usuarios WHERE usuario = %s", (usuario, ))
-            row = cursor.fetchone()
-            if row and verify_password(row['senha_hash'], senha):
-                session['usuario'] = usuario
-                return jsonify({'mensagem': 'Login bem-sucedido'}), 200
-            else:
-                return jsonify({'erro': 'Usuário ou senha inválidos'}), 401
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
+    usuario = request.json.get('usuario')
+    senha = request.json.get('senha')
+    if not usuario or not senha:
+        return jsonify({'erro': 'Usuário e senha são obrigatórios'}), 400
+    
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT senha_hash FROM usuarios WHERE usuario = %s", (usuario,))
+        row = cursor.fetchone()
+        if row and verify_password(row['senha_hash'], senha):
+            session['usuario'] = usuario
+            return jsonify({'mensagem': 'Login bem-sucedido'}), 200
+        return jsonify({'erro': 'Usuário ou senha inválidos'}), 401
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
             db.close()
 
 @app.route('/logout')
@@ -338,31 +339,31 @@ def auth_status():
 @app.route('/add_regiao', methods=['POST'])
 @login_required
 def nova_regiao():
-    if request.method == 'POST':
-        nome = request.json.get('nome')
-        descricao = request.json.get('descricao', '')
-        if not nome:
-            return jsonify({'erro': 'Nome da região é obrigatório'}), 400
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            # Pegar usuario_id da sessão
-            usuario = session.get('usuario')
-            cursor.execute("SELECT id FROM usuarios WHERE usuario = %s", (usuario,))
-            user_result = cursor.fetchone()
-            
-            if not user_result:
-                return jsonify({'erro': 'Usuário não encontrado'}), 404
-            
-            usuario_id = user_result['id']
-            cursor.execute("INSERT INTO regioes (usuario_id, nome, descricao) VALUES (%s, %s, %s)", (usuario_id, nome, descricao))
-            db.commit()
-            return jsonify({'mensagem': 'Região criada com sucesso'}), 201
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
-            if db:
-                db.close()
+    nome = request.json.get('nome')
+    descricao = request.json.get('descricao', '')
+    if not nome:
+        return jsonify({'erro': 'Nome da região é obrigatório'}), 400
+    
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        usuario = session.get('usuario')
+        cursor.execute("SELECT id FROM usuarios WHERE usuario = %s", (usuario,))
+        user_result = cursor.fetchone()
+        
+        if not user_result:
+            return jsonify({'erro': 'Usuário não encontrado'}), 404
+        
+        cursor.execute("INSERT INTO regioes (usuario_id, nome, descricao) VALUES (%s, %s, %s)", 
+                      (user_result['id'], nome, descricao))
+        db.commit()
+        return jsonify({'mensagem': 'Região criada com sucesso'}), 201
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
+            db.close()
 
 @app.route('/regioes', methods=['GET'])
 @login_required
@@ -424,66 +425,59 @@ def get_regiao_details(regiao_id):
 @app.route('/add_semaforo', methods=['POST'])
 @login_required
 def novo_semaforo():
-    if request.method == 'POST':
-        regiao_id = request.json.get('regiao_id')
-        localizacao = request.json.get('localizacao')
-        estado = request.json.get('estado')
-        tempo = request.json.get('tempo')
-        if not regiao_id or not localizacao or not estado or not tempo:
-            return jsonify({'erro': 'Todos os campos são obrigatórios'}), 400
-        
-        # Simular dados reais de tráfego
-        fluxo_veiculos = random.randint(15, 40)
-        taxa_ocupacao = random.randint(50, 100)
-        atraso_medio = random.randint(10, 50)
-        throughput = fluxo_veiculos * 60
-        queue_length = random.randint(0, 50)
-        
-        eficiencia = calcular_eficiencia_semaforo(
-            estado, tempo,
-            fluxo_veiculos=fluxo_veiculos,
-            taxa_ocupacao=taxa_ocupacao,
-            atraso_medio=atraso_medio,
-            throughput=throughput,
-            queue_length=queue_length,
-            pedidos_pedestres=random.randint(0, 5)
-        )
-        
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            cursor.execute("""INSERT INTO semaforos 
-                (regiao_id, localizacao, estado, tempo, eficiencia, fluxo_veiculos, 
-                 taxa_ocupacao, atraso_medio, throughput, queue_length) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
-                (regiao_id, localizacao, estado, tempo, eficiencia, fluxo_veiculos,
-                 taxa_ocupacao, atraso_medio, throughput, queue_length))
-            db.commit()
-            return jsonify({'mensagem': 'Semaforo criado com sucesso', 'eficiencia': eficiencia}), 201
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
+    regiao_id = request.json.get('regiao_id')
+    localizacao = request.json.get('localizacao')
+    estado = request.json.get('estado')
+    tempo = request.json.get('tempo')
+    if not regiao_id or not localizacao or not estado or not tempo:
+        return jsonify({'erro': 'Todos os campos são obrigatórios'}), 400
+    
+    fluxo_veiculos = random.randint(15, 40)
+    taxa_ocupacao = random.randint(50, 100)
+    atraso_medio = random.randint(10, 50)
+    eficiencia = calcular_eficiencia_semaforo(
+        estado, tempo,
+        fluxo_veiculos=fluxo_veiculos,
+        taxa_ocupacao=taxa_ocupacao,
+        atraso_medio=atraso_medio,
+        throughput=fluxo_veiculos * 60,
+        queue_length=random.randint(0, 50),
+        pedidos_pedestres=random.randint(0, 5)
+    )
+    
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""INSERT INTO semaforos 
+            (regiao_id, localizacao, estado, tempo, eficiencia, fluxo_veiculos, 
+             taxa_ocupacao, atraso_medio, throughput, queue_length) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
+            (regiao_id, localizacao, estado, tempo, eficiencia, fluxo_veiculos,
+             taxa_ocupacao, atraso_medio, fluxo_veiculos * 60, random.randint(0, 50)))
+        db.commit()
+        return jsonify({'mensagem': 'Semaforo criado com sucesso', 'eficiencia': eficiencia}), 201
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
             db.close()
 
 @app.route('/get_semaforo/<int:id_semaforo>', methods=['GET'])
 @login_required
 def busca_semaforo(id_semaforo):
-    if request.method == 'GET':
-        db = None
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            cursor.execute("SELECT * FROM semaforos WHERE id = %s", (id_semaforo, ))
-            dado = cursor.fetchone()
-            if dado:
-                return jsonify(dado), 200
-            else:
-                return jsonify({'erro': 'Semáforo não encontrado'}), 404
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
-            if db:
-                db.close()
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT * FROM semaforos WHERE id = %s", (id_semaforo,))
+        dado = cursor.fetchone()
+        return jsonify(dado or {'erro': 'Semáforo não encontrado'}), 200 if dado else 404
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
+            db.close()
 
 @app.route('/semaforos', methods=['GET'])
 @login_required
@@ -547,143 +541,127 @@ def get_top5_semaforos(regiao_id, tipo):
 @app.route('/update_semaforo/<int:id_semaforo>', methods=['PUT'])
 @login_required
 def update_semaforo(id_semaforo):
-    if request.method == 'PUT':
-        localizacao = request.json.get('localizacao')
-        estado = request.json.get('estado')
-        tempo = request.json.get('tempo')
-        if not localizacao or not estado or not tempo:
-            return jsonify({'erro': 'Campos obrigatórios faltando'}), 400
-        try:
-            # Simular novos dados de tráfego
-            fluxo_veiculos = random.randint(15, 40)
-            taxa_ocupacao = random.randint(50, 100)
-            atraso_medio = random.randint(10, 50)
-            throughput = fluxo_veiculos * 60
-            queue_length = random.randint(0, 50)
-            
-            eficiencia = calcular_eficiencia_semaforo(
-                estado, tempo,
-                fluxo_veiculos=fluxo_veiculos,
-                taxa_ocupacao=taxa_ocupacao,
-                atraso_medio=atraso_medio,
-                throughput=throughput,
-                queue_length=queue_length,
-                pedidos_pedestres=random.randint(0, 5)
-            )
-            
-            db = get_db()
-            cursor = db.cursor()
-            query = """UPDATE semaforos SET localizacao = %s, estado = %s, tempo = %s, eficiencia = %s,
+    localizacao = request.json.get('localizacao')
+    estado = request.json.get('estado')
+    tempo = request.json.get('tempo')
+    if not localizacao or not estado or not tempo:
+        return jsonify({'erro': 'Campos obrigatórios faltando'}), 400
+    
+    fluxo_veiculos = random.randint(15, 40)
+    taxa_ocupacao = random.randint(50, 100)
+    atraso_medio = random.randint(10, 50)
+    queue_length = random.randint(0, 50)
+    eficiencia = calcular_eficiencia_semaforo(
+        estado, tempo,
+        fluxo_veiculos=fluxo_veiculos,
+        taxa_ocupacao=taxa_ocupacao,
+        atraso_medio=atraso_medio,
+        throughput=fluxo_veiculos * 60,
+        queue_length=queue_length,
+        pedidos_pedestres=random.randint(0, 5)
+    )
+    
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""UPDATE semaforos SET localizacao = %s, estado = %s, tempo = %s, eficiencia = %s,
                        fluxo_veiculos = %s, taxa_ocupacao = %s, atraso_medio = %s, throughput = %s,
-                       queue_length = %s WHERE id = %s"""
-            params = [localizacao, estado, tempo, eficiencia, fluxo_veiculos, taxa_ocupacao, 
-                     atraso_medio, throughput, queue_length, id_semaforo]
-            cursor.execute(query, params)
-            db.commit()
-            return jsonify({'mensagem': 'Semáforo atualizado com sucesso', 'eficiencia': eficiencia}), 200
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
+                       queue_length = %s WHERE id = %s""",
+            (localizacao, estado, tempo, eficiencia, fluxo_veiculos, taxa_ocupacao, 
+             atraso_medio, fluxo_veiculos * 60, queue_length, id_semaforo))
+        db.commit()
+        return jsonify({'mensagem': 'Semáforo atualizado com sucesso', 'eficiencia': eficiencia}), 200
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
             db.close()
 
 @app.route('/semaforos/<int:id_semaforo>', methods=['DELETE'])
 @login_required
 def deletar_semaforo(id_semaforo):
-    if request.method == 'DELETE':
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            cursor.execute("DELETE FROM semaforos WHERE id = %s", (id_semaforo,))
-            db.commit()
-            return jsonify({'mensagem': 'Semáforo deletado com sucesso'}), 200
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM semaforos WHERE id = %s", (id_semaforo,))
+        db.commit()
+        return jsonify({'mensagem': 'Semáforo deletado com sucesso'}), 200
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
             db.close()
 
 @app.route('/add_poste', methods=['POST'])
 @login_required
 def novo_poste():
-    if request.method == 'POST':
-        regiao_id = request.json.get('regiao_id')
-        localizacao = request.json.get('localizacao')
-        estado = request.json.get('estado')
-        automatico = request.json.get('automatico')
-        if not regiao_id or not localizacao or estado is None or automatico is None:
-            return jsonify({'erro': 'Todos os campos são obrigatórios'}), 400
-        
-        # Simular dados realistas de iluminação com GRANDE variabilidade
-        # para criar diferenciação clara entre postes
-        consumo_real = random.uniform(60, 160) if estado == 1 else 0
-        # Luminância com variação significativa
-        luminancia_media = random.uniform(0.3, 2.5) if estado == 1 else 0
-        # Iluminância com variação significativa
-        iluminancia_media = random.uniform(5, 30) if estado == 1 else 0
-        iluminancia_minima = random.uniform(2, 15) if estado == 1 else 0
-        # Uniformidade variável (importante para eficiência)
-        uniformidade = random.uniform(0.20, 0.65)
-        # Fator de potência variável
-        fator_potencia = random.uniform(0.82, 0.99)
-        # Temperatura de cor variável
-        temperatura_cor = random.choice([2700, 3000, 4000, 5000, 6500])
-        # Índice de reprodução de cor variável
-        indice_reproducao_cor = random.randint(55, 95)
-        # Taxa de ocupação da via variável
-        taxa_ocupacao_via = random.randint(20, 100)
-        
-        eficiencia = calcular_eficiencia_poste(
-            estado, automatico,
-            potencia_nominal=150,
-            consumo_real=consumo_real,
-            luminancia_media=luminancia_media,
-            iluminancia_minima=iluminancia_minima,
-            iluminancia_media=iluminancia_media,
-            uniformidade=uniformidade,
-            fator_potencia=fator_potencia,
-            temperatura_cor=temperatura_cor,
-            indice_reproducao_cor=indice_reproducao_cor,
-            taxa_ocupacao_via=taxa_ocupacao_via,
-            modo_dimming=random.choice([0, 1]) if automatico == 1 else 0,
-            infrared_detection=random.choice([0, 1]) if automatico == 1 else 0
-        )
-        
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            cursor.execute("""INSERT INTO postes 
-                (regiao_id, localizacao, estado, automatico, eficiencia, consumo_real,
-                 luminancia_media, iluminancia_media, iluminancia_minima, uniformidade,
-                 fator_potencia, modo_dimming, infrared_detection)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
-                (regiao_id, localizacao, estado, automatico, eficiencia, consumo_real,
-                 luminancia_media, iluminancia_media, iluminancia_minima, uniformidade,
-                 fator_potencia, random.choice([0, 1]) if automatico == 1 else 0, random.choice([0, 1]) if automatico == 1 else 0))
-            db.commit()
-            return jsonify({'mensagem': 'Poste criado com sucesso', 'eficiencia': eficiencia}), 201
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
+    regiao_id = request.json.get('regiao_id')
+    localizacao = request.json.get('localizacao')
+    estado = request.json.get('estado')
+    automatico = request.json.get('automatico')
+    if not regiao_id or not localizacao or estado is None or automatico is None:
+        return jsonify({'erro': 'Todos os campos são obrigatórios'}), 400
+    
+    consumo_real = random.uniform(60, 160) if estado == 1 else 0
+    luminancia_media = random.uniform(0.3, 2.5) if estado == 1 else 0
+    iluminancia_media = random.uniform(5, 30) if estado == 1 else 0
+    iluminancia_minima = random.uniform(2, 15) if estado == 1 else 0
+    modo_dimming = random.choice([0, 1]) if automatico == 1 else 0
+    infrared_detection = random.choice([0, 1]) if automatico == 1 else 0
+    
+    eficiencia = calcular_eficiencia_poste(
+        estado, automatico,
+        potencia_nominal=150,
+        consumo_real=consumo_real,
+        luminancia_media=luminancia_media,
+        iluminancia_minima=iluminancia_minima,
+        iluminancia_media=iluminancia_media,
+        uniformidade=random.uniform(0.20, 0.65),
+        fator_potencia=random.uniform(0.82, 0.99),
+        temperatura_cor=random.choice([2700, 3000, 4000, 5000, 6500]),
+        indice_reproducao_cor=random.randint(55, 95),
+        taxa_ocupacao_via=random.randint(20, 100),
+        modo_dimming=modo_dimming,
+        infrared_detection=infrared_detection
+    )
+    
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""INSERT INTO postes 
+            (regiao_id, localizacao, estado, automatico, eficiencia, consumo_real,
+             luminancia_media, iluminancia_media, iluminancia_minima, uniformidade,
+             fator_potencia, modo_dimming, infrared_detection)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
+            (regiao_id, localizacao, estado, automatico, eficiencia, consumo_real,
+             luminancia_media, iluminancia_media, iluminancia_minima, random.uniform(0.20, 0.65),
+             random.uniform(0.82, 0.99), modo_dimming, infrared_detection))
+        db.commit()
+        return jsonify({'mensagem': 'Poste criado com sucesso', 'eficiencia': eficiencia}), 201
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
             db.close()
 
 @app.route('/get_poste/<int:id_poste>', methods=['GET'])
 @login_required
 def busca_poste(id_poste):
-    if request.method == 'GET':
-        db = None
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            cursor.execute("SELECT * FROM postes WHERE id = %s", (id_poste, ))
-            dado = cursor.fetchone()
-            if dado:
-                return jsonify(dado), 200
-            else:
-                return jsonify({'erro': 'Poste não encontrado'}), 404
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
-            if db:
-                db.close()
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("SELECT * FROM postes WHERE id = %s", (id_poste,))
+        dado = cursor.fetchone()
+        return jsonify(dado or {'erro': 'Poste não encontrado'}), 200 if dado else 404
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
+            db.close()
 
 @app.route('/postes', methods=['GET'])
 @login_required
@@ -747,77 +725,70 @@ def get_top5_postes(regiao_id, tipo):
 @app.route('/update_poste/<int:id_poste>', methods=['PUT'])
 @login_required
 def update_poste(id_poste):
-    if request.method == 'PUT':
-        localizacao = request.json.get('localizacao')
-        estado = request.json.get('estado')
-        automatico = request.json.get('automatico')
-        if localizacao is None or estado is None or automatico is None:
-            return jsonify({'erro': 'Campos obrigatórios faltando'}), 400
-        try:
-            # Simular novos dados de iluminação com GRANDE variabilidade
-            consumo_real = random.uniform(60, 160) if estado == 1 else 0
-            # Luminância com variação significativa
-            luminancia_media = random.uniform(0.3, 2.5) if estado == 1 else 0
-            # Iluminância com variação significativa
-            iluminancia_media = random.uniform(5, 30) if estado == 1 else 0
-            iluminancia_minima = random.uniform(2, 15) if estado == 1 else 0
-            # Uniformidade variável (importante para eficiência)
-            uniformidade = random.uniform(0.20, 0.65)
-            # Fator de potência variável
-            fator_potencia = random.uniform(0.82, 0.99)
-            # Temperatura de cor variável
-            temperatura_cor = random.choice([2700, 3000, 4000, 5000, 6500])
-            # Índice de reprodução de cor variável
-            indice_reproducao_cor = random.randint(55, 95)
-            # Taxa de ocupação da via variável
-            taxa_ocupacao_via = random.randint(20, 100)
-            
-            eficiencia = calcular_eficiencia_poste(
-                estado, automatico,
-                potencia_nominal=150,
-                consumo_real=consumo_real,
-                luminancia_media=luminancia_media,
-                iluminancia_minima=iluminancia_minima,
-                iluminancia_media=iluminancia_media,
-                uniformidade=uniformidade,
-                fator_potencia=fator_potencia,
-                temperatura_cor=temperatura_cor,
-                indice_reproducao_cor=indice_reproducao_cor,
-                taxa_ocupacao_via=taxa_ocupacao_via,
-                modo_dimming=random.choice([0, 1]) if automatico == 1 else 0,
-                infrared_detection=random.choice([0, 1]) if automatico == 1 else 0
-            )
-            
-            db = get_db()
-            cursor = db.cursor()
-            query = """UPDATE postes SET localizacao = %s, estado = %s, automatico = %s, eficiencia = %s,
+    localizacao = request.json.get('localizacao')
+    estado = request.json.get('estado')
+    automatico = request.json.get('automatico')
+    if localizacao is None or estado is None or automatico is None:
+        return jsonify({'erro': 'Campos obrigatórios faltando'}), 400
+    
+    consumo_real = random.uniform(60, 160) if estado == 1 else 0
+    luminancia_media = random.uniform(0.3, 2.5) if estado == 1 else 0
+    iluminancia_media = random.uniform(5, 30) if estado == 1 else 0
+    iluminancia_minima = random.uniform(2, 15) if estado == 1 else 0
+    uniformidade = random.uniform(0.20, 0.65)
+    fator_potencia = random.uniform(0.82, 0.99)
+    modo_dimming = random.choice([0, 1]) if automatico == 1 else 0
+    infrared_detection = random.choice([0, 1]) if automatico == 1 else 0
+    
+    eficiencia = calcular_eficiencia_poste(
+        estado, automatico,
+        potencia_nominal=150,
+        consumo_real=consumo_real,
+        luminancia_media=luminancia_media,
+        iluminancia_minima=iluminancia_minima,
+        iluminancia_media=iluminancia_media,
+        uniformidade=uniformidade,
+        fator_potencia=fator_potencia,
+        temperatura_cor=random.choice([2700, 3000, 4000, 5000, 6500]),
+        indice_reproducao_cor=random.randint(55, 95),
+        taxa_ocupacao_via=random.randint(20, 100),
+        modo_dimming=modo_dimming,
+        infrared_detection=infrared_detection
+    )
+    
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("""UPDATE postes SET localizacao = %s, estado = %s, automatico = %s, eficiencia = %s,
                        consumo_real = %s, luminancia_media = %s, iluminancia_media = %s,
                        iluminancia_minima = %s, uniformidade = %s, fator_potencia = %s,
-                       modo_dimming = %s, infrared_detection = %s WHERE id = %s"""
-            params = [localizacao, estado, automatico, eficiencia, consumo_real, luminancia_media,
-                     iluminancia_media, iluminancia_minima, uniformidade, fator_potencia,
-                     random.choice([0, 1]) if automatico == 1 else 0, random.choice([0, 1]) if automatico == 1 else 0, id_poste]
-            cursor.execute(query, params)
-            db.commit()
-            return jsonify({'mensagem': 'Poste atualizado com sucesso', 'eficiencia': eficiencia}), 200
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
+                       modo_dimming = %s, infrared_detection = %s WHERE id = %s""",
+            (localizacao, estado, automatico, eficiencia, consumo_real, luminancia_media,
+             iluminancia_media, iluminancia_minima, uniformidade, fator_potencia,
+             modo_dimming, infrared_detection, id_poste))
+        db.commit()
+        return jsonify({'mensagem': 'Poste atualizado com sucesso', 'eficiencia': eficiencia}), 200
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
             db.close()
 
 @app.route('/postes/<int:id_poste>', methods=['DELETE'])
 @login_required
 def deletar_poste(id_poste):
-    if request.method == 'DELETE':
-        try:
-            db = get_db()
-            cursor = db.cursor()
-            cursor.execute("DELETE FROM postes WHERE id = %s", (id_poste,))
-            db.commit()
-            return jsonify({'mensagem': 'Poste deletado com sucesso'}), 200
-        except pymysql.Error as e:
-            return jsonify({'erro': str(e)}), 500
-        finally:
+    db = None
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM postes WHERE id = %s", (id_poste,))
+        db.commit()
+        return jsonify({'mensagem': 'Poste deletado com sucesso'}), 200
+    except pymysql.Error as e:
+        return jsonify({'erro': str(e)}), 500
+    finally:
+        if db:
             db.close()
 
 
