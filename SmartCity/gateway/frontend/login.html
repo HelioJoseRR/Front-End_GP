@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Login - Cidade Inteligente</title>
-    <link rel="stylesheet" href="../static/login.css">
+    <link rel="stylesheet" href="../static/login.css?v=2">
 </head>
 <body>
-    <div class="sol"></div>
-    <div class="lua"></div>
-    <div class="estrelas"></div>
-    <div class="nuvens"></div>
-    
     <div class="login-container">
         <div class="login-card">
             <h1>Cidade Inteligente</h1>
@@ -22,11 +20,11 @@
                 <form onsubmit="handleLogin(event)">
                     <div class="input-group">
                         <label for="login-usuario">Usuário</label>
-                        <input type="text" id="login-usuario" name="usuario" required autocomplete="username">
+                        <input type="text" id="login-usuario" name="usuario" required autocomplete="username" placeholder="seu_usuario">
                     </div>
                     <div class="input-group">
                         <label for="login-senha">Senha</label>
-                        <input type="password" id="login-senha" name="senha" required autocomplete="current-password">
+                        <input type="password" id="login-senha" name="senha" required autocomplete="current-password" placeholder="sua_senha">
                     </div>
                     <button type="submit" class="btn-primary">Entrar</button>
                 </form>
@@ -41,15 +39,15 @@
                 <form onsubmit="handleRegister(event)">
                     <div class="input-group">
                         <label for="register-usuario">Usuário</label>
-                        <input type="text" id="register-usuario" name="usuario" required autocomplete="username">
+                        <input type="text" id="register-usuario" name="usuario" required autocomplete="username" placeholder="escolha_um_usuario">
                     </div>
                     <div class="input-group">
                         <label for="register-senha">Senha</label>
-                        <input type="password" id="register-senha" name="senha" required autocomplete="new-password">
+                        <input type="password" id="register-senha" name="senha" required autocomplete="new-password" placeholder="crie_uma_senha">
                     </div>
                     <div class="input-group">
                         <label for="register-senha-confirm">Confirmar Senha</label>
-                        <input type="password" id="register-senha-confirm" name="senha-confirm" required autocomplete="new-password">
+                        <input type="password" id="register-senha-confirm" name="senha-confirm" required autocomplete="new-password" placeholder="confirme_a_senha">
                     </div>
                     <button type="submit" class="btn-primary">Registrar</button>
                 </form>
@@ -63,6 +61,6 @@
         </div>
     </div>
     
-    <script src="../static/login.js"></script>
+    <script src="../static/login.js?v=2"></script>
 </body>
 </html>

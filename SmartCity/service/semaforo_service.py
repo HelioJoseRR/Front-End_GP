@@ -46,4 +46,4 @@ def mudar_modo():
     modo_operacao = novo_modo
     return jsonify({"mensagem":f"Modo alterado para {modo_operacao}"}), 200
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port = 5001)
+    app.run(host="0.0.0.0", port=5001, debug=True)

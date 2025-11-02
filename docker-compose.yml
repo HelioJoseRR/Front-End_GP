@@ -21,7 +21,9 @@ services:
       retries: 5
 
   gateway:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: smartcity_gateway
     ports:
       - "5000:5000"
@@ -35,23 +37,33 @@ services:
       - DB_NAME=smartcity
       - DB_USER=smartcity_user
       - DB_PASSWORD=smartcity_pass
+      - PEPPER=wGlg83O8yizv1eQlkSjBqe
+      - SECRET_KEY=dev-secret-key-change-in-production
     depends_on:
       mysql:
         condition: service_healthy
     command: python -m flask run --host=0.0.0.0 --port=5000
 
   semaforo:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: smartcity_semaforo
     ports:
       - "5001:5001"
+    environment:
+      - FLASK_ENV=development
     command: python SmartCity/service/semaforo_service.py
 
   iluminacao:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: smartcity_iluminacao
     ports:
       - "5002:5002"
+    environment:
+      - FLASK_ENV=development
     command: python SmartCity/service/iluminacao_service.py
 
 volumes:
