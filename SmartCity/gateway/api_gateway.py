@@ -612,17 +612,24 @@ def novo_poste():
         if not regiao_id or not localizacao or estado is None or automatico is None:
             return jsonify({'erro': 'Todos os campos são obrigatórios'}), 400
         
-        # Simular dados realistas de iluminação com mais variabilidade
-        consumo_real = random.uniform(80, 140) if estado == 1 else 0
-        # Adicionar variação na luminância (nem sempre perfeita)
-        luminancia_media = random.uniform(0.5, 2.0) if estado == 1 else 0
-        # Adicionar variação na iluminância (nem sempre no padrão)
-        iluminancia_media = random.uniform(8, 25) if estado == 1 else 0
-        iluminancia_minima = random.uniform(3, 10) if estado == 1 else 0
-        # Uniformidade variável
-        uniformidade = random.uniform(0.25, 0.55)
+        # Simular dados realistas de iluminação com GRANDE variabilidade
+        # para criar diferenciação clara entre postes
+        consumo_real = random.uniform(60, 160) if estado == 1 else 0
+        # Luminância com variação significativa
+        luminancia_media = random.uniform(0.3, 2.5) if estado == 1 else 0
+        # Iluminância com variação significativa
+        iluminancia_media = random.uniform(5, 30) if estado == 1 else 0
+        iluminancia_minima = random.uniform(2, 15) if estado == 1 else 0
+        # Uniformidade variável (importante para eficiência)
+        uniformidade = random.uniform(0.20, 0.65)
         # Fator de potência variável
-        fator_potencia = random.uniform(0.88, 0.99)
+        fator_potencia = random.uniform(0.82, 0.99)
+        # Temperatura de cor variável
+        temperatura_cor = random.choice([2700, 3000, 4000, 5000, 6500])
+        # Índice de reprodução de cor variável
+        indice_reproducao_cor = random.randint(55, 95)
+        # Taxa de ocupação da via variável
+        taxa_ocupacao_via = random.randint(20, 100)
         
         eficiencia = calcular_eficiencia_poste(
             estado, automatico,
@@ -633,11 +640,11 @@ def novo_poste():
             iluminancia_media=iluminancia_media,
             uniformidade=uniformidade,
             fator_potencia=fator_potencia,
-            temperatura_cor=random.choice([3000, 4000, 5000]),
-            indice_reproducao_cor=random.randint(65, 85),
-            taxa_ocupacao_via=random.randint(30, 100),
-            modo_dimming=1 if automatico == 1 else 0,
-            infrared_detection=1 if automatico == 1 else 0
+            temperatura_cor=temperatura_cor,
+            indice_reproducao_cor=indice_reproducao_cor,
+            taxa_ocupacao_via=taxa_ocupacao_via,
+            modo_dimming=random.choice([0, 1]) if automatico == 1 else 0,
+            infrared_detection=random.choice([0, 1]) if automatico == 1 else 0
         )
         
         try:
@@ -650,7 +657,7 @@ def novo_poste():
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", 
                 (regiao_id, localizacao, estado, automatico, eficiencia, consumo_real,
                  luminancia_media, iluminancia_media, iluminancia_minima, uniformidade,
-                 fator_potencia, 1 if automatico == 1 else 0, 1 if automatico == 1 else 0))
+                 fator_potencia, random.choice([0, 1]) if automatico == 1 else 0, random.choice([0, 1]) if automatico == 1 else 0))
             db.commit()
             return jsonify({'mensagem': 'Poste criado com sucesso', 'eficiencia': eficiencia}), 201
         except pymysql.Error as e:
@@ -747,17 +754,23 @@ def update_poste(id_poste):
         if localizacao is None or estado is None or automatico is None:
             return jsonify({'erro': 'Campos obrigatórios faltando'}), 400
         try:
-            # Simular novos dados de iluminação com mais variabilidade
-            consumo_real = random.uniform(80, 140) if estado == 1 else 0
-            # Adicionar variação na luminância (nem sempre perfeita)
-            luminancia_media = random.uniform(0.5, 2.0) if estado == 1 else 0
-            # Adicionar variação na iluminância (nem sempre no padrão)
-            iluminancia_media = random.uniform(8, 25) if estado == 1 else 0
-            iluminancia_minima = random.uniform(3, 10) if estado == 1 else 0
-            # Uniformidade variável
-            uniformidade = random.uniform(0.25, 0.55)
+            # Simular novos dados de iluminação com GRANDE variabilidade
+            consumo_real = random.uniform(60, 160) if estado == 1 else 0
+            # Luminância com variação significativa
+            luminancia_media = random.uniform(0.3, 2.5) if estado == 1 else 0
+            # Iluminância com variação significativa
+            iluminancia_media = random.uniform(5, 30) if estado == 1 else 0
+            iluminancia_minima = random.uniform(2, 15) if estado == 1 else 0
+            # Uniformidade variável (importante para eficiência)
+            uniformidade = random.uniform(0.20, 0.65)
             # Fator de potência variável
-            fator_potencia = random.uniform(0.88, 0.99)
+            fator_potencia = random.uniform(0.82, 0.99)
+            # Temperatura de cor variável
+            temperatura_cor = random.choice([2700, 3000, 4000, 5000, 6500])
+            # Índice de reprodução de cor variável
+            indice_reproducao_cor = random.randint(55, 95)
+            # Taxa de ocupação da via variável
+            taxa_ocupacao_via = random.randint(20, 100)
             
             eficiencia = calcular_eficiencia_poste(
                 estado, automatico,
@@ -768,11 +781,11 @@ def update_poste(id_poste):
                 iluminancia_media=iluminancia_media,
                 uniformidade=uniformidade,
                 fator_potencia=fator_potencia,
-                temperatura_cor=random.choice([3000, 4000, 5000]),
-                indice_reproducao_cor=random.randint(65, 85),
-                taxa_ocupacao_via=random.randint(30, 100),
-                modo_dimming=1 if automatico == 1 else 0,
-                infrared_detection=1 if automatico == 1 else 0
+                temperatura_cor=temperatura_cor,
+                indice_reproducao_cor=indice_reproducao_cor,
+                taxa_ocupacao_via=taxa_ocupacao_via,
+                modo_dimming=random.choice([0, 1]) if automatico == 1 else 0,
+                infrared_detection=random.choice([0, 1]) if automatico == 1 else 0
             )
             
             db = get_db()
@@ -783,7 +796,7 @@ def update_poste(id_poste):
                        modo_dimming = %s, infrared_detection = %s WHERE id = %s"""
             params = [localizacao, estado, automatico, eficiencia, consumo_real, luminancia_media,
                      iluminancia_media, iluminancia_minima, uniformidade, fator_potencia,
-                     1 if automatico == 1 else 0, 1 if automatico == 1 else 0, id_poste]
+                     random.choice([0, 1]) if automatico == 1 else 0, random.choice([0, 1]) if automatico == 1 else 0, id_poste]
             cursor.execute(query, params)
             db.commit()
             return jsonify({'mensagem': 'Poste atualizado com sucesso', 'eficiencia': eficiencia}), 200

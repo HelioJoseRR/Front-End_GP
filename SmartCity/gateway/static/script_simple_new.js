@@ -222,26 +222,22 @@ function carregarPostes() {
 
 function deletarSemaforo(id, evt) {
   if (evt) evt.stopPropagation()
-  if (confirm("Tem certeza?")) {
-    fetch(`/semaforos/${id}`, { method: "DELETE" })
-      .then(() => {
-        carregarSemaforos()
-        atualizarDashboard()
-      })
-      .catch(e => console.error(e))
-  }
+  fetch(`/semaforos/${id}`, { method: "DELETE" })
+    .then(() => {
+      carregarSemaforos()
+      atualizarDashboard()
+    })
+    .catch(e => console.error(e))
 }
 
 function deletarPoste(id, evt) {
   if (evt) evt.stopPropagation()
-  if (confirm("Tem certeza?")) {
-    fetch(`/postes/${id}`, { method: "DELETE" })
-      .then(() => {
-        carregarPostes()
-        atualizarDashboard()
-      })
-      .catch(e => console.error(e))
-  }
+  fetch(`/postes/${id}`, { method: "DELETE" })
+    .then(() => {
+      carregarPostes()
+      atualizarDashboard()
+    })
+    .catch(e => console.error(e))
 }
 
 function mostrarDetalheSemaforo(id) {
