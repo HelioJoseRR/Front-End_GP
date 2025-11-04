@@ -5,6 +5,26 @@ let currentRegiao = null
 let regioesList = []
 let detailModal = null
 let regioesModal = null
+let intervaloId;
+
+function iniciarAtualizacao(tab = 'semaforo') {
+  if (!intervaloId) {
+    if(tab == 'semaforo'){
+      intervaloId = setInterval(() => {
+        carregarSemaforos();
+      }, 1000);
+    }else{
+      intervaloId = setInterval(() => {
+        carregarPostes();
+      }, 1000);
+    }
+  }
+}
+
+function pararAtualizacao() {
+  clearInterval(intervaloId);
+  intervaloId = null;
+}
 
 function switchTab(tabName) {
   document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none")
@@ -83,7 +103,7 @@ async function selecionarRegiao(regiaoId, evt) {
     currentRegiao = regiao
     document.querySelectorAll(".list-group-item-action").forEach(item => item.classList.remove("active"))
     if (evt && evt.target) evt.target.closest(".list-group-item-action").classList.add("active")
-    
+    pararAtualizacao()
     carregarSemaforos()
     carregarPostes()
     atualizarDashboard()
@@ -165,19 +185,21 @@ function carregarSemaforos() {
     document.getElementById("semaforos-list").innerHTML = "<p class='text-muted'>Selecione uma região</p>"
     return
   }
-  
+  iniciarAtualizacao();
   fetch(`/semaforos?regiao_id=${currentRegiao.id}`)
     .then(r => r.json())
     .then(semaforos => {
       const html = semaforos.map(s => {
-        const corEstado = s.estado === 'verde' ? 'success' : s.estado === 'vermelho' ? 'danger' : 'warning'
+        const tempo = (Math.abs(Math.floor(((new Date(s.created_at) - new Date())) / 1000)) % s.tempo) / s.tempo;
+        const estado = tempo < 0.5 ? 'verde' : tempo < 0.65 ? 'amarelo' : 'vermelho';
+        const corEstado = estado === 'verde' ? 'success' : estado === 'vermelho' ? 'danger' : 'warning'
         return `
         <a href="#" onclick="mostrarDetalheSemaforo(${s.id}); return false;" class="list-group-item list-group-item-action list-group-item-dark text-light border-secondary">
           <div class="d-flex justify-content-between align-items-start">
             <div>
               <h6 class="mb-1">📍 ${s.localizacao}</h6>
               <p class="mb-0 small text-muted">
-                Estado: <span class="badge bg-${corEstado}">${s.estado}</span>
+                Estado: <span class="badge bg-${corEstado}">${estado}</span>
                 Tempo: ${s.tempo}s
                 Eficiência: <span class="badge bg-${s.eficiencia >= 70 ? 'success' : s.eficiencia >= 50 ? 'warning' : 'danger'}">${s.eficiencia}%</span>
               </p>
@@ -200,6 +222,7 @@ function carregarPostes() {
   fetch(`/postes?regiao_id=${currentRegiao.id}`)
     .then(r => r.json())
     .then(postes => {
+      iniciarAtualizacao('postes');
       const html = postes.map(p => `
         <a href="#" onclick="mostrarDetalhePoste(${p.id}); return false;" class="list-group-item list-group-item-action list-group-item-dark text-light border-secondary">
           <div class="d-flex justify-content-between align-items-start">
@@ -244,14 +267,16 @@ function mostrarDetalheSemaforo(id) {
   fetch(`/get_semaforo/${id}`)
     .then(r => r.json())
     .then(semaforo => {
-      const html = `
+      const tempo = (Math.abs(Math.floor(((new Date(semaforo.created_at) - new Date())) / 1000)) % semaforo.tempo) / semaforo.tempo;
+      const estado = tempo < 0.5 ? 'verde' : tempo < 0.65 ? 'amarelo' : 'vermelho';
+        const html = `
         <h5 class="mb-3">🚦 Detalhes do Semáforo</h5>
         <div class="list-group list-group-flush">
           <div class="list-group-item bg-dark border-secondary">
             <strong>Localização:</strong> ${semaforo.localizacao}
           </div>
           <div class="list-group-item bg-dark border-secondary">
-            <strong>Estado:</strong> ${semaforo.estado}
+            <strong>Estado:</strong> ${estado}
           </div>
           <div class="list-group-item bg-dark border-secondary">
             <strong>Tempo:</strong> ${semaforo.tempo}s
