@@ -7,13 +7,13 @@ let detailModal = null
 let regioesModal = null
 let intervaloId;
 
-function iniciarAtualizacao(tab = 'semaforo') {
+function iniciarAtualizacao(tabName) {
   if (!intervaloId) {
-    if(tab == 'semaforo'){
+    if(tabName == 'semaforos'){
       intervaloId = setInterval(() => {
         carregarSemaforos();
       }, 1000);
-    }else{
+    }else if(tabName == 'postes'){
       intervaloId = setInterval(() => {
         carregarPostes();
       }, 1000);
@@ -31,6 +31,8 @@ function switchTab(tabName) {
   document.querySelectorAll(".nav-link").forEach(btn => btn.classList.remove("active"))
   document.getElementById(`${tabName}-tab`).style.display = "block"
   event.target.classList.add("active")
+  pararAtualizacao()
+  iniciarAtualizacao(tabName)
 }
 
 function logout() {
@@ -103,7 +105,6 @@ async function selecionarRegiao(regiaoId, evt) {
     currentRegiao = regiao
     document.querySelectorAll(".list-group-item-action").forEach(item => item.classList.remove("active"))
     if (evt && evt.target) evt.target.closest(".list-group-item-action").classList.add("active")
-    pararAtualizacao()
     carregarSemaforos()
     carregarPostes()
     atualizarDashboard()
@@ -185,7 +186,6 @@ function carregarSemaforos() {
     document.getElementById("semaforos-list").innerHTML = "<p class='text-muted'>Selecione uma região</p>"
     return
   }
-  iniciarAtualizacao();
   fetch(`/semaforos?regiao_id=${currentRegiao.id}`)
     .then(r => r.json())
     .then(semaforos => {
@@ -222,7 +222,6 @@ function carregarPostes() {
   fetch(`/postes?regiao_id=${currentRegiao.id}`)
     .then(r => r.json())
     .then(postes => {
-      iniciarAtualizacao('postes');
       const html = postes.map(p => `
         <a href="#" onclick="mostrarDetalhePoste(${p.id}); return false;" class="list-group-item list-group-item-action list-group-item-dark text-light border-secondary">
           <div class="d-flex justify-content-between align-items-start">
